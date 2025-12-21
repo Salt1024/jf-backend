@@ -67,7 +67,7 @@ interface FormData {
 }
 
 const { table, tableGet } = useTable<TableItem, TableFilters>({
-  url: '/api/v1/users',
+  url: '/api/v1/user',
   filters: {
     province: '',
     city: '',
@@ -158,6 +158,7 @@ const handleFilterProvinceChange = () => {
 }
 
 const formRef = ref<InstanceType<typeof NForm>>()
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const form = reactive({
   loading: false,
   visible: false,
@@ -220,9 +221,11 @@ const itemSubmit = async () => {
   form.loading = true
   try {
     if (form.isEdit) {
-      await put('/api/v1/users', form.data)
+      await put('/api/v1/user', form.data)
     } else {
-      await post('/api/v1/users', form.data)
+      await post('/api/v1/user', {
+        users: [form.data]
+      })
     }
     tableGet()
     form.visible = false
@@ -234,6 +237,106 @@ const itemSubmit = async () => {
   }
 }
 
+const itemImport = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+
+  reader.onload = async () => {
+    try {
+      const text = String(reader.result || '')
+      const lines = text.split(/\r?\n/).filter((l) => l.trim())
+      if (lines.length <= 1) {
+        showMessage.error('文件内容为空或格式不正确')
+        return
+      }
+
+      const headers = lines[0].split(',')
+      const nameIdx = headers.indexOf('姓名')
+      const phoneIdx = headers.indexOf('手机号')
+      const provinceIdx = headers.indexOf('省份')
+      const cityIdx = headers.indexOf('城市')
+      const communityIdx = headers.indexOf('社区')
+      const houseNumberIdx = headers.indexOf('门牌号')
+      const drawCountIdx = headers.indexOf('抽奖次数')
+
+      if (
+        nameIdx === -1 ||
+        phoneIdx === -1 ||
+        provinceIdx === -1 ||
+        cityIdx === -1 ||
+        communityIdx === -1 ||
+        houseNumberIdx === -1
+      ) {
+        showMessage.error('表头不正确，请使用与示例相同的表头')
+        return
+      }
+
+      const users: FormData[] = []
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i]
+        if (!line.trim()) continue
+        const cells = line.split(',')
+
+        const user: FormData = {
+          name: cells[nameIdx] || '',
+          phone: cells[phoneIdx] || '',
+          province: cells[provinceIdx] || '',
+          city: cells[cityIdx] || '',
+          community: cells[communityIdx] || '',
+          houseNumber: cells[houseNumberIdx] || '',
+          drawCount:
+            drawCountIdx !== -1 && cells[drawCountIdx]
+              ? Number(cells[drawCountIdx])
+              : 4,
+        }
+
+        if (!user.name || !user.phone) continue
+        users.push(user)
+      }
+
+      if (!users.length) {
+        showMessage.error('未解析到有效的数据行')
+        return
+      }
+
+      table.loading = true
+
+      const msgRef = showMessage.loading('正在导入用户数据...', {
+        duration: 0,
+      })
+
+      // 分批导入，避免一次请求数据过大
+      const chunkSize = 100
+      for (let i = 0; i < users.length; i += chunkSize) {
+        const chunk = users.slice(i, i + chunkSize)
+        await post('/api/v1/user', { users: chunk })
+        msgRef.content = `正在导入用户数据${Math.round((i + chunkSize) / users.length * 100)}%...`
+      }
+
+      msgRef.destroy()
+
+      await tableGet(true)
+      showMessage.success(`成功导入 ${users.length} 条用户数据`)
+    } catch (e: any) {
+      showMessage.error(e.message || '导入失败')
+    } finally {
+      table.loading = false
+      // 清空文件选择，便于再次选择同一文件
+      target.value = ''
+    }
+  }
+
+  reader.readAsText(file, 'utf-8')
+}
+
+const handleImportClick = () => {
+  fileInputRef.value?.click()
+}
+
 const itemRemove = async (row: TableItem) => {
   const d = dialog.warning({
     title: '警告',
@@ -243,7 +346,7 @@ const itemRemove = async (row: TableItem) => {
     onPositiveClick: async () => {
       d.loading = true
       try {
-        await del(`/api/v1/users/${row.id}`)
+        await del(`/api/v1/user/${row.id}`)
         await tableGet()
         showMessage.success('删除成功')
       } catch (e: any) {
@@ -307,7 +410,19 @@ onMounted(() => {
           <NButton type="primary" @click="tableGet(true)">查询</NButton>
         </NFormItem>
       </NForm>
-      <NButton type="primary" @click="itemAdd">添加用户</NButton>
+      <div>
+        <NButton type="primary" @click="itemAdd">添加用户</NButton>
+        <NButton style="margin-left: 8px" @click="handleImportClick">
+          导入用户
+        </NButton>
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept=".csv"
+          style="display: none"
+          @change="itemImport"
+        />
+      </div>
     </NSpace>
 
     <NDataTable
@@ -316,6 +431,7 @@ onMounted(() => {
       :loading="table.loading"
       :pagination="table.pagination"
       :scroll-x="1200"
+      remote
     />
 
     <NModal

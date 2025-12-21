@@ -19,6 +19,7 @@ export function useTable<TableItem, Filters = null, TransformFilters = null> (op
     pagination: {
       page: 1,
       pageSize: options.pageSize || 10,
+      itemCount: 0,
       showSizePicker: true,
       pageSizes: [10, 20, 50, 100],
       onChange: (page: number) => {
@@ -39,11 +40,13 @@ export function useTable<TableItem, Filters = null, TransformFilters = null> (op
     table.loading = true
     if (reload) {
       table.pagination.page = 1
+      table.pagination.itemCount = 0
+      table.data = []
     }
     const request = options.method === 'post' ? post : get
     try {
       const param = typeof options.transformFilters === 'function' ? options.transformFilters(table.filters) : table.filters
-      const result = await request<Array<TableItem>>(
+      const result = await request<{ list: Array<TableItem>, total: number }>(
         options.url,
         Object.assign(
           {
@@ -53,7 +56,8 @@ export function useTable<TableItem, Filters = null, TransformFilters = null> (op
           param
         )
       )
-      table.data = result
+      table.data = result.list
+      table.pagination.itemCount = result.total
     } catch (e: any) {
       showMessage.error(e.message)
     } finally {
