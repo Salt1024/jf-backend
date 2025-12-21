@@ -9,7 +9,9 @@ const pinia = createPinia()
 app.use(router)
 app.use(pinia)
 
-const piniaState = sessionStorage.getItem('pinia')
+const PINIA_KEY = 'jf-backend-pinia'
+
+const piniaState = sessionStorage.getItem(PINIA_KEY)
 if (piniaState) {
   pinia.state.value = JSON.parse(piniaState)
 }
@@ -17,7 +19,7 @@ if (piniaState) {
 watch(
   pinia.state,
   (state) => {
-    sessionStorage.setItem('pinia', JSON.stringify(state))
+    sessionStorage.setItem(PINIA_KEY, JSON.stringify(state))
   },
   { deep: true }
 )

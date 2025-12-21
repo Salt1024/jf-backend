@@ -36,7 +36,7 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/views/AdminManage.vue'),
         meta: {
           key: 'AdminManage',
-          label: '后台用户管理',
+          label: '管理员列表',
           icon: DocumentTextOutline,
         },
       },

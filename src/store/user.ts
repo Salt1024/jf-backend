@@ -41,7 +41,9 @@ export const useUserStore = defineStore('user', {
 
     // 注册
     async signUp (params: SignInParams) {
-      return await post<void>('/api/v1/auth/signUp', params)
+      return await post<void>('/api/v1/auth/signUp', {
+        users: [params],
+      })
     },
 
     async logout () {

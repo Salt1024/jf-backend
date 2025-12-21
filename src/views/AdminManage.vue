@@ -42,7 +42,6 @@ const { table, tableGet } = useTable<TableItem, TableFilters>({
   filters: {
     username: '',
   },
-  pageSize: 50,
 })
 
 const tableColumns: DataTableColumns<TableItem> = [

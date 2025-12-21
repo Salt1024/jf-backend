@@ -31,7 +31,10 @@ instance.interceptors.response.use(
     return res.data?.data
   },
   (error) => {
-    if(error.response.data) {
+    if (error.response.data) {
+      if (Array.isArray(error.response.data.message)) {
+        error.response.data.message = error.response.data.message.join(',')
+      }
       return Promise.reject(error.response.data)
     }
     return Promise.reject({
@@ -41,19 +44,19 @@ instance.interceptors.response.use(
   },
 )
 
-export const get = <Data = null> (url: string, params: Record<string, any> = {}, config?: AxiosRequestConfig) => {
+export const get = <Data = null>(url: string, params: Record<string, any> = {}, config?: AxiosRequestConfig) => {
   return instance.get<Data, Data>(url, Object.assign({}, { params: params }, config))
 }
 
-export const post = <Data = null> (url: string, data: Record<string, any> = {}, config?: AxiosRequestConfig) => {
+export const post = <Data = null>(url: string, data: Record<string, any> = {}, config?: AxiosRequestConfig) => {
   return instance.post<Data, Data>(url, data, config)
 }
 
-export const put = <Data = null> (url: string, data: Record<string, any> = {}, config?: AxiosRequestConfig) => {
+export const put = <Data = null>(url: string, data: Record<string, any> = {}, config?: AxiosRequestConfig) => {
   return instance.put<Data, Data>(url, data, config)
 }
 
-export const del = <Data = null> (url: string, params: Record<string, any> = {}, config?: AxiosRequestConfig) => {
+export const del = <Data = null>(url: string, params: Record<string, any> = {}, config?: AxiosRequestConfig) => {
   return instance.delete<Data, Data>(url, Object.assign({}, { params: params }, config))
 }
 

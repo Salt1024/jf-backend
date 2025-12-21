@@ -18,9 +18,10 @@ export function useTable<TableItem, Filters = null, TransformFilters = null> (op
     filters: null,
     pagination: {
       page: 1,
-      pageSize: options.pageSize || 10,
+      pageSize: options.pageSize || 20,
       itemCount: 0,
       showSizePicker: true,
+      showQuickJumper: true,
       pageSizes: [10, 20, 50, 100],
       onChange: (page: number) => {
         table.pagination.page = page
