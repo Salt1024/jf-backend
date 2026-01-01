@@ -18,12 +18,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "^/api/v1/": {
-        target: "http://127.0.0.1:8080",
+        target: "http://127.0.0.1:30000",
         changeOrigin: true,
         secure: false,
       },
       "^/files/": {
-        target: "http://127.0.0.1:8080",
+        target: "http://127.0.0.1:30000",
         changeOrigin: true,
         secure: false,
       },
