@@ -20,8 +20,8 @@ const userStore = useUserStore()
 const activeTab = ref('signin')
 
 const signInForm = reactive({
-  username: 'admin',
-  password: '123456',
+  username: '',
+  password: '',
 })
 
 const signUpForm = reactive({
