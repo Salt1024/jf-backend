@@ -31,22 +31,21 @@ export const useUserStore = defineStore('user', {
 
   actions: {
     // 登录
-    async signIn (params: SignInParams) {
+    async signIn(params: SignInParams) {
       const response = await post<SignInResponse>('/api/v1/auth/signIn', params)
-      this.$patch({
-        userInfo: response,
-      })
-      return response
+      this.userInfo.id = response.id
+      this.userInfo.username = response.username
+      sessionStorage.setItem('token', response.token)
     },
 
     // 注册
-    async signUp (params: SignInParams) {
+    async signUp(params: SignInParams) {
       return await post<void>('/api/v1/auth/signUp', {
         users: [params],
       })
     },
 
-    async logout () {
+    async logout() {
       this.$reset()
       return true
     },
